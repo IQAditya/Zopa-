@@ -1,98 +1,99 @@
 :root{
-    --bg:#f8f9fb; --card:#ffffff; --muted:#6b7280; --line:#e5e7eb;
-    --accent:#2563eb; --text:#1f2937; --shadow:0 6px 20px rgba(17,24,39,.08);
-    --btn:#eef2ff; --btn-border:#c7d2fe; --danger:#ef4444;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; background:var(--bg);
-    font-family: Inter, Roboto, Arial, sans-serif; color:var(--text);
-  }
-  
-  /* App layout */
-  .app{
-    display:flex; gap:16px; padding:16px; min-height:100vh;
-    align-items:flex-start;
-  }
-  .left{flex:1; min-width:0}
-  .right{width:360px; display:flex; flex-direction:column; gap:14px}
-  
-  /* Cards / panels */
-  .card{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:14px;
-    box-shadow:var(--shadow);
-    padding:14px;
-  }
-  .section h3{margin:0 0 10px 0; font-size:16px}
-  .subtitle{margin:0; color:var(--muted); font-size:13px}
-  
-  /* Topbar inside the main card */
-  .topbar{margin-bottom:10px}
-  .topbar h1{margin:0 0 4px 0; font-size:18px}
-  
-  /* Chart container */
-  #chart{
-    width:100%; height:520px; border:1px dashed var(--line);
-    border-radius:12px; background:#fff
-  }
-  
-  /* Slider + value */
-  .slider-row{display:flex; align-items:center; gap:12px}
-  #qx-slider{flex:1}
-  #qx-slider-value{min-width:64px; text-align:right; color:var(--accent); font-weight:600}
-  
-  /* Rows for inputs */
-  .row{
-    display:grid;
-    grid-template-columns: 90px 1fr 42px 42px;
-    gap:8px; align-items:center; margin:8px 0;
-  }
-  .label{color:var(--muted); font-size:12px}
-  .num{
-    width:100%; padding:8px 10px; border:1px solid var(--line);
-    border-radius:10px; font-size:14px; background:#fff; color:var(--text);
-  }
-  
-  /* Buttons */
-  .btn{
-    border-radius:10px; height:36px; cursor:pointer; transition:.15s;
-    border:1px solid var(--btn-border); background:var(--btn);
-  }
-  .btn:hover{filter:brightness(0.97)}
-  .plus{color:var(--accent); font-weight:700}
-  .minus{color:var(--danger); font-weight:700}
-  .ghost{
-    background:#fff; border:1px solid var(--line); padding:8px 10px;
-    color:var(--text); border-radius:10px;
-  }
-  .actions{display:flex; gap:8px; flex-wrap:wrap}
-  
-  /* Toggles */
-  .tog{display:flex; align-items:center; gap:10px; margin:6px 0; font-size:14px}
-  
-  /* Sub‑section divider */
-  .divider{
-    height:1px; background:var(--line);
-    margin:8px 0 6px 0; opacity:.7; border-radius:999px;
-  }
-  
-  /* Hints */
-  .hint{font-size:12px; color:var(--muted); margin-top:6px}
-  
-  /* Triangle metrics chips */
-  .metrics{display:flex; gap:8px; flex-wrap:wrap}
-  .badge{
-    background:#eef2ff; border:1px solid #c7d2fe;
-    padding:6px 8px; border-radius:10px; font-size:12px;
-  }
-  
-  /* Responsive */
-  @media (max-width: 1100px){
-    .app{flex-direction:column}
-    .right{width:100%}
-    #chart{height:380px}
-  }
-  
+  --bg:#f8f9fb; --card:#ffffff; --muted:#6b7280; --line:#e5e7eb;
+  --accent:#2563eb; --text:#1f2937; --shadow:0 6px 20px rgba(17,24,39,.08);
+  --btn:#eef2ff; --btn-border:#c7d2fe; --danger:#ef4444;
+  --warn-bg:#fff7ed; --warn-border:#fdba74; --warn-text:#9a3412;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg);
+  font-family: Inter, Roboto, Arial, sans-serif; color:var(--text);
+}
+
+/* App layout */
+.app{display:flex; gap:16px; padding:16px; min-height:100vh; align-items:flex-start;}
+.left{flex:1; min-width:0}
+.right{width:360px; display:flex; flex-direction:column; gap:14px}
+
+/* Cards / panels */
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  padding:14px;
+}
+.section h3{margin:0 0 10px 0; font-size:16px}
+.subtitle{margin:0; color:var(--muted); font-size:13px}
+
+/* Topbar */
+.topbar{margin-bottom:10px}
+.topbar h1{margin:0 0 4px 0; font-size:18px}
+
+/* Warning banner */
+.warn{
+  padding:10px 12px;
+  border:1px solid var(--warn-border);
+  background:var(--warn-bg);
+  color:var(--warn-text);
+  border-radius:10px;
+  margin-bottom:10px;
+  font-size:13px;
+}
+.hidden{display:none}
+
+/* Chart container */
+#chart{width:100%; height:520px; border:1px dashed var(--line); border-radius:12px; background:#fff}
+
+/* Slider + value */
+.slider-row{display:flex; align-items:center; gap:12px}
+#qx-slider{flex:1}
+#qx-slider-value{min-width:64px; text-align:right; color:var(--accent); font-weight:600}
+
+/* Rows for inputs */
+.row{
+  display:grid;
+  grid-template-columns: 110px 1fr 42px 42px;
+  gap:8px; align-items:center; margin:8px 0;
+}
+.section-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px}
+.label{color:var(--muted); font-size:12px}
+.num{
+  width:100%; padding:8px 10px; border:1px solid var(--line);
+  border-radius:10px; font-size:14px; background:#fff; color:var(--text);
+}
+
+/* Buttons */
+.btn{
+  border-radius:10px; height:36px; cursor:pointer; transition:.15s;
+  border:1px solid var(--btn-border); background:var(--btn);
+}
+.btn:hover{filter:brightness(0.97)}
+.plus{color:var(--accent); font-weight:700}
+.minus{color:var(--danger); font-weight:700}
+.ghost{
+  background:#fff; border:1px solid var(--line); padding:8px 10px;
+  color:var(--text); border-radius:10px;
+}
+.actions{display:flex; gap:8px; flex-wrap:wrap}
+
+/* Toggles */
+.tog{display:flex; align-items:center; gap:10px; margin:6px 0; font-size:14px}
+
+/* Hints */
+.hint{font-size:12px; color:var(--muted); margin-top:6px}
+
+/* Metrics chips */
+.metrics{display:flex; gap:8px; flex-wrap:wrap}
+.badge{
+  background:#eef2ff; border:1px solid #c7d2fe;
+  padding:6px 8px; border-radius:10px; font-size:12px;
+}
+
+/* Responsive */
+@media (max-width: 1100px){
+  .app{flex-direction:column}
+  .right{width:100%}
+  #chart{height:380px}
+}

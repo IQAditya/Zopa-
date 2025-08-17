@@ -16,7 +16,7 @@
     <main class="left card">
       <header class="topbar">
         <h1>Redistribution on x + y = V</h1>
-        <p class="subtitle">Feasible segment from P; axes auto‑scale to V + 10%</p>
+        <p class="subtitle">Feasible segment from P; axes auto-scale to V + 10%</p>
       </header>
 
       <div id="chart" title="Tip: Drag the labels ‘P’ and ‘Q’ to move the points"></div>
@@ -67,6 +67,22 @@
           <button id="v-dec" class="btn minus" type="button">－</button>
         </div>
 
+        <!-- NEW: Base K and Height H inputs -->
+        <div class="row">
+          <label for="k-input" class="label">K (base PR)</label>
+          <input id="k-input" class="num" type="number" step="0.1" value="40.0">
+          <button id="k-inc" class="btn plus" type="button">＋</button>
+          <button id="k-dec" class="btn minus" type="button">－</button>
+        </div>
+
+        <div class="row">
+          <label for="h-input" class="label">H (height RQ)</label>
+          <input id="h-input" class="num" type="number" step="0.1" value="60.0">
+          <button id="h-inc" class="btn plus" type="button">＋</button>
+          <button id="h-dec" class="btn minus" type="button">－</button>
+        </div>
+
+        <!-- Keep Qx/Qy boxes (you can hide with CSS if you want) -->
         <div class="row">
           <label for="qx-input" class="label">Q.x</label>
           <input id="qx-input" class="num" type="number" step="0.1" value="140.0">
@@ -82,8 +98,8 @@
         </div>
 
         <p class="hint">
-          Q always satisfies <code>Q.x + Q.y = V</code>. While typing in Qx/Qy, we won’t snap to the feasible
-          segment until you leave the field; then we clamp to <code>[P.x, P.x + Δ]</code>.
+          You can edit <strong>K</strong> or <strong>H</strong> directly. They are clamped to <code>[0, Δ]</code>
+          and converted into Q on the feasible segment so that <code>Q.x + Q.y = V</code> always holds.
         </p>
       </section>
 
@@ -92,8 +108,6 @@
         <label class="tog"><input id="show-p" type="checkbox" checked><span>Show P</span></label>
         <label class="tog"><input id="show-q" type="checkbox" checked><span>Show Q</span></label>
         <label class="tog"><input id="show-slope" type="checkbox" checked><span>Show Slope Line</span></label>
-
-        <!-- NEW: Toggle lines/labels for K, H, Angle -->
         <div class="divider"></div>
         <label class="tog"><input id="show-base" type="checkbox" checked><span>Show Base K (PR)</span></label>
         <label class="tog"><input id="show-height" type="checkbox" checked><span>Show Height H (RQ)</span></label>
@@ -113,7 +127,7 @@
 
   <!-- Logic -->
   <script>
-  // Ensure Plotly is loaded before running the app
+  // Wait for Plotly to load
   window.addEventListener('DOMContentLoaded', () => {
     const onReady = () => (window.Plotly ? initApp() : setTimeout(onReady, 30));
     onReady();
@@ -123,29 +137,31 @@
     /* ---------------- Constants / Globals ---------------- */
     const X_MIN = 0.0, Y_MIN = 0.0;
     let   AXIS_MAX = 440.0;            // dynamic = V + 10%
-    const STEP_Q = 0.1;                // button step for Qx/Qy
+    const STEP = 0.1;                  // step for Q/K/H
     const chart = document.getElementById('chart');
 
-    // Plot state flags
-    let plotReady = false;   // have we called newPlot?
-    let eventsBound = false; // have we bound plotly events?
+    let plotReady = false;
+    let eventsBound = false;
 
     /* ---------------- DOM refs ---------------- */
     const $ = id => document.getElementById(id);
-    const pxInput = $('px-input'), pyInput = $('py-input'), vInput = $('v-input');
+    const pxInput = $('px-input'), pyInput = $('py-input'), vInput  = $('v-input');
     const qxInput = $('qx-input'), qyInput = $('qy-input');
+    const kInput  = $('k-input'),  hInput  = $('h-input');
     const qxSlider = $('qx-slider'), qxSliderValue = $('qx-slider-value');
+
     const showP = $('show-p'), showQ = $('show-q'), showSlope = $('show-slope');
     const showBase = $('show-base'), showHeight = $('show-height'), showAngle = $('show-angle');
     const metricsBox = $('metrics');
 
-    // Track manual typing state so we don't clamp while typing
-    let typingQx = false, typingQy = false;
+    // typing flags
+    let typingQx = false, typingQy = false, typingK = false, typingH = false;
 
-    /* ---------------- Math helpers ---------------- */
+    /* ---------------- Helpers ---------------- */
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-    const deg = rad => rad * 180 / Math.PI;
+    const deg   = rad => rad * 180 / Math.PI;
     const delta = (Px, Py, V) => Math.max(0, V - (Px + Py));
+
     function feasibleQxBounds(Px, Py, V){
       const d = delta(Px, Py, V);
       let lo = clamp(Px, X_MIN, AXIS_MAX);
@@ -154,52 +170,47 @@
       return [lo, hi, d];
     }
 
-    /* ---------------- Metrics helper ---------------- */
     function updateMetrics(Px, Py, Qx, Qy){
-      // R is vertical projection of Q onto y = P.y
       const Rx = Qx, Ry = Py;
-      const K = Math.abs(Rx - Px);     // base |PR|
-      const H = Math.abs(Qy - Ry);     // height |RQ|
-      const theta = deg(Math.atan2(H, K || 0));  // angle at P (RPQ)
-
+      const K = Math.abs(Rx - Px);
+      const H = Math.abs(Qy - Ry);
+      const theta = deg(Math.atan2(H, K || 0));
       metricsBox.innerHTML = `
         <span class="badge">P = (${Px.toFixed(1)}, ${Py.toFixed(1)})</span>
         <span class="badge">Q = (${Qx.toFixed(1)}, ${Qy.toFixed(1)})</span>
         <span class="badge">R = (${Rx.toFixed(1)}, ${Ry.toFixed(1)})</span>
-        <span class="badge">K (base PR) = ${K.toFixed(1)}</span>
-        <span class="badge">H (height RQ) = ${H.toFixed(1)}</span>
+        <span class="badge">K = ${K.toFixed(1)}</span>
+        <span class="badge">H = ${H.toFixed(1)}</span>
         <span class="badge">∠RPQ = ${theta.toFixed(2)}°</span>
       `;
       return {K, H, Rx, Ry, theta};
     }
 
-    /* ---------------- Plot builder ---------------- */
-    function renderPlot(traces, layout) {
+    /* ---------------- Plot ---------------- */
+    function renderPlot(traces, layout){
       const config = {displayModeBar:false};
-      if (!plotReady) {
+      if (!plotReady){
         Plotly.newPlot(chart, traces, layout, config).then(()=>{
           plotReady = true;
           if (!eventsBound) bindPlotEvents();
-        }).catch(err=>console.error('Plotly.newPlot error:', err));
+        });
       } else {
-        Plotly.react(chart, traces, layout, config).catch(err=>console.error('Plotly.react error:', err));
+        Plotly.react(chart, traces, layout, config);
       }
     }
 
     function buildFigure(Px, Py, V, Qx, visP, visQ, visSlope, visBase, visHeight, visAngle){
-      const Qy = V - Qx;  // Q must satisfy the line
+      const Qy = V - Qx;
       const {K, H, Rx, Ry, theta} = updateMetrics(Px, Py, Qx, Qy);
 
-      // Sample slope inside the visible box
       const xs = Array.from({length:600}, (_,i)=> X_MIN + (AXIS_MAX - X_MIN)*i/599);
       const ys = xs.map(x => V - x);
 
       const traces = [];
 
-      // Slope line
       if (visSlope){
-        traces.push({ x: xs, y: ys, mode: 'lines', name: 'x + y = V',
-                      line: {color:'#e11d48', width:3} });
+        traces.push({ x: xs, y: ys, mode:'lines', name:'x + y = V',
+                      line:{color:'#e11d48', width:3} });
       }
 
       // P guides
@@ -218,11 +229,10 @@
                       line:{color:'#60a5fa', dash:'dash'} });
       }
 
-      // Triangle edges (conditional)
+      // Base K and Height H (toggleable)
       if (visBase){
         traces.push({ x:[Px, Rx], y:[Py, Ry], mode:'lines', name:'Base K (PR)',
                       line:{color:'#f59e0b', dash:'dot', width:3} });
-        // Label for K near segment
         const offK = 0.015 * AXIS_MAX;
         traces.push({ x:[(Px+Rx)/2], y:[Py + offK], mode:'text', showlegend:false,
                       text:[`K = ${K.toFixed(1)}`], textfont:{color:'#b45309'}, textposition:'top center' });
@@ -230,23 +240,21 @@
       if (visHeight){
         traces.push({ x:[Rx, Qx], y:[Ry, Qy], mode:'lines', name:'Height H (RQ)',
                       line:{color:'#059669', dash:'dot', width:3} });
-        // Label for H near segment
         const offH = 0.015 * AXIS_MAX;
         traces.push({ x:[Rx + offH], y:[(Ry+Qy)/2], mode:'text', showlegend:false,
                       text:[`H = ${H.toFixed(1)}`], textfont:{color:'#065f46'}, textposition:'middle left' });
       }
-      // Always draw slant PQ (kept as before)
+
       traces.push({ x:[Px, Qx], y:[Py, Qy], mode:'lines', name:'PQ',
                     line:{color:'#059669', dash:'dash', width:3} });
 
-      // Angle label at P (conditional)
       if (visAngle){
         const offA = 0.015 * AXIS_MAX;
         traces.push({ x:[Px + offA], y:[Py + offA], mode:'text', showlegend:false,
                       text:[`∠RPQ = ${theta.toFixed(2)}°`], textfont:{color:'#111827'}, textposition:'top left' });
       }
 
-      // Extremes on the slope using Δ (these always show; unchanged)
+      // Extremes (endpoints of feasible segment from P)
       const d = Math.max(0, V - (Px + Py));
       const qxX = clamp(Px + d, X_MIN, AXIS_MAX);
       const qyX = clamp(V - qxX, Y_MIN, AXIS_MAX);
@@ -260,25 +268,17 @@
 
       // P and Q markers
       if (visP){
-        traces.push({
-          x:[Px], y:[Py], mode:'markers', name:'P(start)',
-          marker:{color:'#111827', size:11, line:{width:1, color:'#111827'}}
-        });
+        traces.push({ x:[Px], y:[Py], mode:'markers', name:'P',
+                      marker:{color:'#111827', size:11, line:{width:1, color:'#111827'}}});
       }
       if (visQ){
-        traces.push({
-          x:[Qx], y:[Qy], mode:'markers', name:'Q (allocation)',
-          marker:{color:'white', size:10, line:{width:2, color:'#2563eb'}}
-        });
-        // R marker
-        traces.push({
-          x:[Rx], y:[Ry], mode:'markers+text', name:'R',
-          marker:{color:'#ec4899', size:8}, text:['R'], textposition:'top center',
-          textfont:{color:'#ec4899'}
-        });
+        traces.push({ x:[Qx], y:[Qy], mode:'markers', name:'Q',
+                      marker:{color:'white', size:10, line:{width:2, color:'#2563eb'}}});
+        traces.push({ x:[Rx], y:[Ry], mode:'markers+text', name:'R',
+                      marker:{color:'#ec4899', size:8}, text:['R'], textposition:'top center',
+                      textfont:{color:'#ec4899'} });
       }
 
-      // Draggable annotations: P (0) and Q (1)
       const annotations = [
         { x: Px, y: Py, xref:'x', yref:'y', text:'P', showarrow:false,
           xanchor:'left', yanchor:'bottom', font:{color:'#111827', size:12} },
@@ -294,14 +294,14 @@
         xaxis:{range:[X_MIN, AXIS_MAX], gridcolor:'#e5e7eb', title:'x', zeroline:false, fixedrange:true},
         yaxis:{range:[Y_MIN, AXIS_MAX], gridcolor:'#e5e7eb', title:'y', zeroline:false, fixedrange:true},
         dragmode:false,
-        editable:true,   /* <-- enables dragging annotations (‘P’, ‘Q’) */
+        editable:true,
         annotations
       };
 
       renderPlot(traces, layout);
     }
 
-    /* ---------------- State helpers ---------------- */
+    /* ---------------- State & Sync ---------------- */
     function getState(){
       return {
         Px: parseFloat(pxInput.value || '0'),
@@ -309,56 +309,78 @@
         V:  parseFloat(vInput.value  || '0'),
         Qx: parseFloat(qxInput.value || '0'),
         Qy: parseFloat(qyInput.value || '0'),
+        K:  parseFloat(kInput.value  || '0'),
+        H:  parseFloat(hInput.value  || '0'),
         visP: showP.checked, visQ: showQ.checked, visSlope: showSlope.checked,
         visBase: showBase.checked, visHeight: showHeight.checked, visAngle: showAngle.checked
       };
     }
+
     function syncQxRail(Px, Py, V, {forceClamp} = {forceClamp:true}){
       const [min, max] = feasibleQxBounds(Px, Py, V);
       qxSlider.min = String(min);
       qxSlider.max = String(max);
       if (forceClamp){
         const cur = parseFloat(qxSlider.value);
-        const clampVal = Math.max(min, Math.min(max, cur));
+        const clampVal = clamp(cur, min, max);
         if (clampVal !== cur) qxSlider.value = clampVal;
       }
     }
 
+    function syncKHFromQ(Px, Py, Qx, Qy){
+      if (!typingK) kInput.value = (Qx - Px).toFixed(1);
+      if (!typingH) hInput.value = (Qy - Py).toFixed(1);
+    }
+
     /* ---------------- Core refresh ---------------- */
     function refresh(){
-      let {Px, Py, V, Qx, Qy, visP, visQ, visSlope, visBase, visHeight, visAngle} = getState();
+      let {Px, Py, V, Qx, Qy, K, H, visP, visQ, visSlope, visBase, visHeight, visAngle} = getState();
 
-      // 1) Dynamic axes based on V
+      // Axis from V
       AXIS_MAX = Math.max(0, 1.1 * V);
       qxSlider.max = AXIS_MAX;
 
-      // 2) Clamp P in visible box
-      Px = Math.max(X_MIN, Math.min(AXIS_MAX, Px));
-      Py = Math.max(Y_MIN, Math.min(AXIS_MAX, Py));
+      // Clamp P into viewport
+      Px = clamp(Px, X_MIN, AXIS_MAX);
+      Py = clamp(Py, Y_MIN, AXIS_MAX);
 
-      // 3) Enforce Qx + Qy = V with typing flags
-      if (typingQy){
+      // Feasible segment & Δ
+      const [lo, hi, d] = feasibleQxBounds(Px, Py, V);
+
+      // Priority of control: K > H > Qy > Qx
+      if (typingK){
+        // K -> Qx = Px + K -> snap to [lo, hi]
+        K = clamp(parseFloat(kInput.value || '0'), 0, d);
+        Qx = clamp(Px + K, lo, hi);
+        Qy = V - Qx;
+        qxInput.value = Qx.toFixed(1);
+        qyInput.value = Qy.toFixed(1);
+      } else if (typingH){
+        // H -> Qy = Py + H -> Qx = V - Qy -> snap to rail
+        H = clamp(parseFloat(hInput.value || '0'), 0, d);
+        Qy = Py + H;
+        Qx = V - Qy;
+        Qx = clamp(Qx, lo, hi);
+        Qy = V - Qx;
+        qxInput.value = Qx.toFixed(1);
+        qyInput.value = Qy.toFixed(1);
+      } else if (typingQy){
         Qy = parseFloat(qyInput.value || '0');
         Qx = V - Qy;
-        qxInput.value = Qx.toFixed(1);
       } else if (typingQx){
         Qx = parseFloat(qxInput.value || '0');
         Qy = V - Qx;
-        qyInput.value = Qy.toFixed(1);
       } else {
+        // idle: honor Qx box, then derive Qy
         Qx = parseFloat(qxInput.value || '0');
         Qy = V - Qx;
-        qyInput.value = Qy.toFixed(1);
       }
 
-      // 4) Feasible rail
-      syncQxRail(Px, Py, V, {forceClamp: !(typingQx || typingQy)});
-
-      if (!(typingQx || typingQy)){
-        const [min, max] = feasibleQxBounds(Px, Py, V);
-        Qx = Math.max(min, Math.min(max, Qx));
+      // If not actively typing any of Q/K/H, snap & sync
+      const active = typingQx || typingQy || typingK || typingH;
+      if (!active){
+        Qx = clamp(Qx, lo, hi);
         Qy = V - Qx;
-
         qxInput.value = Qx.toFixed(1);
         qyInput.value = Qy.toFixed(1);
         qxSlider.value = Qx;
@@ -367,43 +389,53 @@
         qxSliderValue.textContent = (parseFloat(qxInput.value || '0')).toFixed(1);
       }
 
-      // 5) Draw (also updates metrics)
-      buildFigure(Px, Py, V, parseFloat(qxInput.value || '0'),
-                  visP, visQ, visSlope, visBase, visHeight, visAngle);
+      // Update K/H from Q & P unless user is typing them
+      syncKHFromQ(Px, Py, Qx, Qy);
+
+      // Keep slider rail current
+      syncQxRail(Px, Py, V, {forceClamp: !active});
+
+      // Draw
+      buildFigure(Px, Py, V, Qx, visP, visQ, visSlope, visBase, visHeight, visAngle);
     }
 
-    /* ---------------- Event binding for dragging ---------------- */
+    /* ---------------- Drag events ---------------- */
     function bindPlotEvents(){
       if (eventsBound) return;
+
       const relayoutHandler = (e)=>{
         if (!e) return;
         const has = k => Object.prototype.hasOwnProperty.call(e, k);
         const V = parseFloat(vInput.value || '0');
 
-        // P moved (drag ‘P’ label)
+        // Drag P
         if (has('annotations[0].x') || has('annotations[0].y')) {
           const newPx = has('annotations[0].x') ? e['annotations[0].x'] : parseFloat(pxInput.value||'0');
           const newPy = has('annotations[0].y') ? e['annotations[0].y'] : parseFloat(pyInput.value||'0');
           AXIS_MAX = Math.max(0, 1.1 * V);
-          pxInput.value = Math.max(0, Math.min(AXIS_MAX, newPx)).toFixed(1);
-          pyInput.value = Math.max(0, Math.min(AXIS_MAX, newPy)).toFixed(1);
-          typingQx = typingQy = false;
+          pxInput.value = clamp(newPx, X_MIN, AXIS_MAX).toFixed(1);
+          pyInput.value = clamp(newPy, Y_MIN, AXIS_MAX).toFixed(1);
+          typingQx = typingQy = typingK = typingH = false;
           refresh();
           return;
         }
 
-        // Q moved (drag ‘Q’ label) – keep on feasible rail
+        // Drag Q (snap on feasible rail)
         if (has('annotations[1].x') || has('annotations[1].y')) {
           let qx = has('annotations[1].x') ? e['annotations[1].x'] : parseFloat(qxInput.value||'0');
           const Px = parseFloat(pxInput.value||'0');
           const Py = parseFloat(pyInput.value||'0');
-          const [min, max] = feasibleQxBounds(Px, Py, V);
-          qx = Math.max(min, Math.min(max, qx));
+          const [lo, hi] = feasibleQxBounds(Px, Py, V);
+          qx = clamp(qx, lo, hi);
+
           qxInput.value = qx.toFixed(1);
           qyInput.value = (V - qx).toFixed(1);
+          kInput.value  = (qx - Px).toFixed(1);
+          hInput.value  = ((V - qx) - Py).toFixed(1);
+
           qxSlider.value = qx;
           qxSliderValue.textContent = qx.toFixed(1);
-          typingQx = typingQy = false;
+          typingQx = typingQy = typingK = typingH = false;
           refresh();
           return;
         }
@@ -415,14 +447,18 @@
     }
 
     /* ---------------- Wiring ---------------- */
-    // Focus/blur to control typing flags
+    // typing flags
     qxInput.addEventListener('focus', ()=>{ typingQx = true; });
     qxInput.addEventListener('blur',  ()=>{ typingQx = false; refresh(); });
     qyInput.addEventListener('focus', ()=>{ typingQy = true; });
     qyInput.addEventListener('blur',  ()=>{ typingQy = false; refresh(); });
+    kInput.addEventListener('focus',  ()=>{ typingK  = true; });
+    kInput.addEventListener('blur',   ()=>{ typingK  = false; refresh(); });
+    hInput.addEventListener('focus',  ()=>{ typingH  = true; });
+    hInput.addEventListener('blur',   ()=>{ typingH  = false; refresh(); });
 
-    // Inputs (live typing)
-    [pxInput, pyInput, vInput, qxInput, qyInput].forEach(el=>{
+    // live inputs
+    [pxInput, pyInput, vInput, qxInput, qyInput, kInput, hInput].forEach(el=>{
       el.addEventListener('change', refresh);
       el.addEventListener('input', ()=>{
         if (el === qxInput) qxSliderValue.textContent = (parseFloat(qxInput.value || '0')).toFixed(1);
@@ -430,61 +466,50 @@
       });
     });
 
-    // Slider
+    // slider
     qxSlider.addEventListener('input', ()=>{
-      if (typingQx || typingQy) return;
+      if (typingQx || typingQy || typingK || typingH) return;
       qxInput.value = parseFloat(qxSlider.value).toFixed(1);
       qxSliderValue.textContent = parseFloat(qxSlider.value).toFixed(1);
       refresh();
     });
 
-    // Visibility
-    [showP, showQ, showSlope, showBase, showHeight, showAngle]
-      .forEach(cb => cb.addEventListener('change', refresh));
+    // visibility
+    [showP, showQ, showSlope, showBase, showHeight, showAngle].forEach(cb => cb.addEventListener('change', refresh));
 
-    // Buttons (+/−)
+    // plus/minus buttons
     Object.entries({
       'px-inc': +1, 'px-dec': -1,
       'py-inc': +1, 'py-dec': -1,
       'v-inc':  +1, 'v-dec':  -1,
-      'qx-inc': +STEP_Q, 'qx-dec': -STEP_Q,
-      'qy-inc': +STEP_Q, 'qy-dec': -STEP_Q,
+      'qx-inc': +STEP, 'qx-dec': -STEP,
+      'qy-inc': +STEP, 'qy-dec': -STEP,
+      'k-inc':  +STEP, 'k-dec':  -STEP,
+      'h-inc':  +STEP, 'h-dec':  -STEP,
     }).forEach(([id, step])=>{
       document.getElementById(id).addEventListener('click', ()=>{
         const key = id.split('-')[0];
-        if (key === 'qx'){
-          typingQx = true;
-          const cur = parseFloat(qxInput.value || '0');
-          qxInput.value = (cur + step).toFixed(1);
-          refresh();
-          typingQx = false;
-        } else if (key === 'qy'){
-          typingQy = true;
-          const cur = parseFloat(qyInput.value || '0');
-          qyInput.value = (cur + step).toFixed(1);
-          refresh();
-          typingQy = false;
-        } else if (key === 'v'){
-          const cur = parseFloat(vInput.value || '0');
-          vInput.value = (cur + step).toFixed(1);
-          refresh();
-        } else {
+        if (key === 'qx'){ typingQx = true; qxInput.value = (parseFloat(qxInput.value||'0') + step).toFixed(1); refresh(); typingQx = false; }
+        else if (key === 'qy'){ typingQy = true; qyInput.value = (parseFloat(qyInput.value||'0') + step).toFixed(1); refresh(); typingQy = false; }
+        else if (key === 'k'){ typingK  = true; kInput.value  = (parseFloat(kInput.value ||'0') + step).toFixed(1);  refresh(); typingK  = false; }
+        else if (key === 'h'){ typingH  = true; hInput.value  = (parseFloat(hInput.value ||'0') + step).toFixed(1);  refresh(); typingH  = false; }
+        else if (key === 'v'){ vInput.value = (parseFloat(vInput.value||'0') + step).toFixed(1); refresh(); }
+        else {
           const input = document.getElementById(key + '-input');
-          const cur = parseFloat(input.value || '0');
-          input.value = (cur + step).toFixed(1);
+          input.value = (parseFloat(input.value||'0') + step).toFixed(1);
           refresh();
         }
       });
     });
 
-    // Actions
+    // actions
     document.getElementById('reset').addEventListener('click', ()=>{
       pxInput.value='100.0'; pyInput.value='200.0'; vInput.value='400.0';
-      qxInput.value='140.0'; qyInput.value='260.0';
+      qxInput.value='140.0'; qyInput.value='260.0'; kInput.value='40.0'; hInput.value='60.0';
       showP.checked=true; showQ.checked=true; showSlope.checked=true;
       showBase.checked=true; showHeight.checked=true; showAngle.checked=true;
       qxSlider.value='140.0'; qxSliderValue.textContent='140.0';
-      typingQx = typingQy = false;
+      typingQx = typingQy = typingK = typingH = false;
       refresh();
     });
     document.getElementById('snap-p').addEventListener('click', ()=>{
@@ -495,7 +520,7 @@
     });
     document.getElementById('center').addEventListener('click', refresh);
 
-    // Initial draw
+    // first draw
     refresh();
   }
   </script>

@@ -200,4 +200,4 @@ def update_plot(px, py, v, qx, qy, qx_slider,
     return fig, qx_min, qx_max, Qx
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run(debug=True)
