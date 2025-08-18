@@ -6,521 +6,509 @@
   <title>Redistribution on x + y = V</title>
 
   <link rel="stylesheet" href="style.css"/>
-  <!-- Plotly CDN -->
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" defer></script>
+  <style>
+    /* tiny helper styles so this file works even without your style.css */
+    :root{--line:#e5e7eb}
+    body{margin:0;font-family:system-ui,Arial}
+    .app{display:flex;gap:16px;padding:16px;min-height:100vh}
+    .left{flex:1;min-width:0}
+    .right{width:380px;display:flex;flex-direction:column;gap:14px}
+    .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+    .row{display:grid;grid-template-columns: 140px 1fr 42px 42px;gap:8px;align-items:center;margin:8px 0}
+    .num{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+    .btn{height:36px;border-radius:10px;border:1px solid var(--line);background:#f8f9fb;cursor:pointer}
+    .slider-row{display:flex;align-items:center;gap:12px}
+    #qx-slider{flex:1}
+    #chart{width:100%;height:520px;border:1px dashed var(--line);border-radius:12px;background:#fff}
+    .tog{display:flex;align-items:center;gap:8px;margin:6px 0}
+    .metrics{display:flex;gap:8px;flex-wrap:wrap}
+    .badge{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:10px;background:#f7fafc}
+  </style>
 </head>
 <body>
   <div class="app">
-
-    <!-- LEFT: Chart -->
+    <!-- LEFT -->
     <main class="left card">
       <header class="topbar">
-        <h1>Redistribution on x + y = V</h1>
-        <p class="subtitle">Feasible segment from P; axes auto-scale to V + 10%</p>
+        <h2>Redistribution on x + y = V</h2>
+        <p class="subtitle">Drag P or Q. Q stays on x+y=V. H = Q.y−P.y, K = Q.x−P.x.</p>
       </header>
 
-      <div id="chart" title="Tip: Drag the labels ‘P’ and ‘Q’ to move the points"></div>
+      <div id="chart" title="Drag ‘P’ or ‘Q’ labels to move the points"></div>
 
-      <!-- Triangle metrics -->
-      <section class="card section" style="margin-top:12px;">
-        <h3>Triangle metrics (P–R–Q)</h3>
+      <section class="card" style="margin-top:12px;">
+        <h3>Triangle metrics & projections</h3>
         <div id="metrics" class="metrics"></div>
       </section>
 
-      <section class="card section">
+      <section class="card">
         <h3>Allocation (Q.x)</h3>
         <div class="slider-row">
           <input id="qx-slider" type="range" min="0" max="440" step="0.1" value="140">
           <output id="qx-slider-value">140.0</output>
         </div>
-        <p class="hint">
-          Feasible: <code>P.x ≤ Q.x ≤ P.x + Δ</code>, where
-          <code>Δ = max(V − (P.x + P.y), 0)</code>. Axes: 0 → <code>V + 10%</code>.
+        <p style="font-size:12px;color:#555;margin:8px 0 0">
+          Feasible rail: <code>P.x ≤ Q.x ≤ P.x + Δ</code>, with <code>Δ = max(V − (P.x + P.y), 0)</code>.
         </p>
       </section>
     </main>
 
-    <!-- RIGHT: Sidebar -->
+    <!-- RIGHT -->
     <aside class="right">
-
-      <section class="card section">
-        <h3>Points &amp; Values</h3>
+      <section class="card">
+        <h3>Points & Values</h3>
 
         <div class="row">
-          <label for="px-input" class="label">P.x</label>
+          <label for="px-input">P.x</label>
           <input id="px-input" class="num" type="number" step="1" value="100.0">
-          <button id="px-inc" class="btn plus" type="button">＋</button>
-          <button id="px-dec" class="btn minus" type="button">－</button>
+          <button id="px-inc" class="btn" type="button">＋</button>
+          <button id="px-dec" class="btn" type="button">－</button>
         </div>
 
         <div class="row">
-          <label for="py-input" class="label">P.y</label>
+          <label for="py-input">P.y</label>
           <input id="py-input" class="num" type="number" step="1" value="200.0">
-          <button id="py-inc" class="btn plus" type="button">＋</button>
-          <button id="py-dec" class="btn minus" type="button">－</button>
+          <button id="py-inc" class="btn" type="button">＋</button>
+          <button id="py-dec" class="btn" type="button">－</button>
         </div>
 
         <div class="row">
-          <label for="v-input" class="label">V (x+y)</label>
+          <label for="v-input">V (x+y)</label>
           <input id="v-input" class="num" type="number" step="1" value="400.0">
-          <button id="v-inc" class="btn plus" type="button">＋</button>
-          <button id="v-dec" class="btn minus" type="button">－</button>
+          <button id="v-inc" class="btn" type="button">＋</button>
+          <button id="v-dec" class="btn" type="button">－</button>
         </div>
 
-        <!-- NEW: Base K and Height H inputs -->
         <div class="row">
-          <label for="k-input" class="label">K (base PR)</label>
+          <label for="k-input">K (base PR)</label>
           <input id="k-input" class="num" type="number" step="0.1" value="40.0">
-          <button id="k-inc" class="btn plus" type="button">＋</button>
-          <button id="k-dec" class="btn minus" type="button">－</button>
+          <button id="k-inc" class="btn" type="button">＋</button>
+          <button id="k-dec" class="btn" type="button">－</button>
         </div>
 
         <div class="row">
-          <label for="h-input" class="label">H (height RQ)</label>
+          <label for="h-input">H (height RQ)</label>
           <input id="h-input" class="num" type="number" step="0.1" value="60.0">
-          <button id="h-inc" class="btn plus" type="button">＋</button>
-          <button id="h-dec" class="btn minus" type="button">－</button>
+          <button id="h-inc" class="btn" type="button">＋</button>
+          <button id="h-dec" class="btn" type="button">－</button>
         </div>
 
-        <!-- Keep Qx/Qy boxes (you can hide with CSS if you want) -->
         <div class="row">
-          <label for="qx-input" class="label">Q.x</label>
+          <label for="qx-input">Q.x</label>
           <input id="qx-input" class="num" type="number" step="0.1" value="140.0">
-          <button id="qx-inc" class="btn plus" type="button">＋</button>
-          <button id="qx-dec" class="btn minus" type="button">－</button>
+          <button id="qx-inc" class="btn" type="button">＋</button>
+          <button id="qx-dec" class="btn" type="button">－</button>
         </div>
 
         <div class="row">
-          <label for="qy-input" class="label">Q.y</label>
+          <label for="qy-input">Q.y</label>
           <input id="qy-input" class="num" type="number" step="0.1" value="260.0">
-          <button id="qy-inc" class="btn plus" type="button">＋</button>
-          <button id="qy-dec" class="btn minus" type="button">－</button>
+          <button id="qy-inc" class="btn" type="button">＋</button>
+          <button id="qy-dec" class="btn" type="button">－</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Constraint: H + K</h3>
+
+        <div class="tog">
+          <input type="radio" name="sum-mode" id="sum-custom" checked>
+          <label for="sum-custom">Custom target</label>
+        </div>
+        <div class="row" id="sum-row">
+          <label for="sum-input">H+K target</label>
+          <input id="sum-input" class="num" type="number" step="0.1" value="100.0">
+          <button id="sum-inc" class="btn" type="button">＋</button>
+          <button id="sum-dec" class="btn" type="button">－</button>
         </div>
 
-        <p class="hint">
-          You can edit <strong>K</strong> or <strong>H</strong> directly. They are clamped to <code>[0, Δ]</code>
-          and converted into Q on the feasible segment so that <code>Q.x + Q.y = V</code> always holds.
+        <div class="tog">
+          <input type="radio" name="sum-mode" id="sum-v300">
+          <label for="sum-v300">Lock to V − 300 (forces P.x + P.y = 300)</label>
+        </div>
+
+        <p style="font-size:12px;color:#555;margin:8px 0 0">
+          Note: with our geometry, <code>H+K = (Q.y−P.y) + (Q.x−P.x) = V − (P.x + P.y) = Δ</code>.
         </p>
       </section>
 
-      <section class="card section">
+      <section class="card">
         <h3>Visibility</h3>
-        <label class="tog"><input id="show-p" type="checkbox" checked><span>Show P</span></label>
-        <label class="tog"><input id="show-q" type="checkbox" checked><span>Show Q</span></label>
-        <label class="tog"><input id="show-slope" type="checkbox" checked><span>Show Slope Line</span></label>
-        <div class="divider"></div>
-        <label class="tog"><input id="show-base" type="checkbox" checked><span>Show Base K (PR)</span></label>
-        <label class="tog"><input id="show-height" type="checkbox" checked><span>Show Height H (RQ)</span></label>
-        <label class="tog"><input id="show-angle" type="checkbox" checked><span>Show Angle ∠RPQ</span></label>
+        <label class="tog"><input id="show-p" type="checkbox" checked> Show P</label>
+        <label class="tog"><input id="show-q" type="checkbox" checked> Show Q</label>
+        <label class="tog"><input id="show-slope" type="checkbox" checked> Show Slope Line</label>
       </section>
 
-      <section class="card section">
+      <section class="card">
         <h3>Actions</h3>
-        <div class="actions">
-          <button id="reset" class="btn ghost" type="button">Reset</button>
-          <button id="snap-p" class="btn ghost" type="button">Snap P → line</button>
-          <button id="center" class="btn ghost" type="button">Center</button>
+        <div class="actions" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="reset" class="btn" type="button">Reset</button>
+          <button id="snap-p" class="btn" type="button">Snap P → line V</button>
+          <button id="center" class="btn" type="button">Center</button>
         </div>
       </section>
     </aside>
   </div>
 
-  <!-- Logic -->
   <script>
-  // Wait for Plotly to load
-  window.addEventListener('DOMContentLoaded', () => {
-    const onReady = () => (window.Plotly ? initApp() : setTimeout(onReady, 30));
-    onReady();
+  // wait for Plotly
+  window.addEventListener('DOMContentLoaded', ()=> {
+    const ready = () => (window.Plotly ? init() : setTimeout(ready, 25));
+    ready();
   });
 
-  function initApp(){
-    /* ---------------- Constants / Globals ---------------- */
-    const X_MIN = 0.0, Y_MIN = 0.0;
-    let   AXIS_MAX = 440.0;            // dynamic = V + 10%
-    const STEP = 0.1;                  // step for Q/K/H
+  function init(){
     const chart = document.getElementById('chart');
 
-    let plotReady = false;
-    let eventsBound = false;
-
-    /* ---------------- DOM refs ---------------- */
+    // refs
     const $ = id => document.getElementById(id);
-    const pxInput = $('px-input'), pyInput = $('py-input'), vInput  = $('v-input');
-    const qxInput = $('qx-input'), qyInput = $('qy-input');
-    const kInput  = $('k-input'),  hInput  = $('h-input');
-    const qxSlider = $('qx-slider'), qxSliderValue = $('qx-slider-value');
+    const pxI=$('px-input'), pyI=$('py-input'), vI=$('v-input');
+    const kI=$('k-input'),  hI=$('h-input');
+    const qxI=$('qx-input'), qyI=$('qy-input');
+    const qxS=$('qx-slider'), qxSV=$('qx-slider-value');
+    const showP=$('show-p'), showQ=$('show-q'), showSlope=$('show-slope');
 
-    const showP = $('show-p'), showQ = $('show-q'), showSlope = $('show-slope');
-    const showBase = $('show-base'), showHeight = $('show-height'), showAngle = $('show-angle');
-    const metricsBox = $('metrics');
+    const sumCustom=$('sum-custom'), sumV300=$('sum-v300'), sumI=$('sum-input');
+
+    let plotReady=false, eventsBound=false;
 
     // typing flags
-    let typingQx = false, typingQy = false, typingK = false, typingH = false;
+    let typingQx=false, typingQy=false, typingK=false, typingH=false, typingSum=false;
+    let typingV=false, typingPx=false, typingPy=false;
 
-    /* ---------------- Helpers ---------------- */
-    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-    const deg   = rad => rad * 180 / Math.PI;
-    const delta = (Px, Py, V) => Math.max(0, V - (Px + Py));
+    const X_MIN=0, Y_MIN=0;
+    let AXIS_MAX=440;
 
-    function feasibleQxBounds(Px, Py, V){
-      const d = delta(Px, Py, V);
+    // helpers
+    const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+    const deg=r=>r*180/Math.PI;
+    const delta=(Px,Py,V)=>Math.max(0, V-(Px+Py));
+    const feasibleQx=(Px,Py,V)=>{
+      const d = delta(Px,Py,V);
       let lo = clamp(Px, X_MIN, AXIS_MAX);
       let hi = clamp(Px + d, X_MIN, AXIS_MAX);
       if (hi < lo) hi = lo;
-      return [lo, hi, d];
-    }
+      return [lo,hi,d];
+    };
 
-    function updateMetrics(Px, Py, Qx, Qy){
-      const Rx = Qx, Ry = Py;
-      const K = Math.abs(Rx - Px);
-      const H = Math.abs(Qy - Ry);
-      const theta = deg(Math.atan2(H, K || 0));
-      metricsBox.innerHTML = `
-        <span class="badge">P = (${Px.toFixed(1)}, ${Py.toFixed(1)})</span>
-        <span class="badge">Q = (${Qx.toFixed(1)}, ${Qy.toFixed(1)})</span>
-        <span class="badge">R = (${Rx.toFixed(1)}, ${Ry.toFixed(1)})</span>
-        <span class="badge">K = ${K.toFixed(1)}</span>
-        <span class="badge">H = ${H.toFixed(1)}</span>
-        <span class="badge">∠RPQ = ${theta.toFixed(2)}°</span>
+    // metrics + chips
+    function metrics(Px,Py,Qx,Qy){
+      const Rx=Qx, Ry=Py;
+      const K=Math.abs(Rx-Px), H=Math.abs(Qy-Ry);
+      const theta=deg(Math.atan2(H, K||0));
+      $('metrics').innerHTML = `
+        <span class="badge">P=(${Px.toFixed(1)}, ${Py.toFixed(1)})</span>
+        <span class="badge">Q=(${Qx.toFixed(1)}, ${Qy.toFixed(1)})</span>
+        <span class="badge">K=${K.toFixed(1)}</span>
+        <span class="badge">H=${H.toFixed(1)}</span>
+        <span class="badge">H+K=${(H+K).toFixed(1)}</span>
+        <span class="badge">Δ=${(Qx+Qy-Px-Py).toFixed(1)}</span>
       `;
-      return {K, H, Rx, Ry, theta};
+      return {Rx,Ry,K,H,theta};
     }
 
-    /* ---------------- Plot ---------------- */
-    function renderPlot(traces, layout){
-      const config = {displayModeBar:false};
-      if (!plotReady){
-        Plotly.newPlot(chart, traces, layout, config).then(()=>{
-          plotReady = true;
-          if (!eventsBound) bindPlotEvents();
+    // plot builder
+    function render(traces, layout){
+      const cfg={displayModeBar:false};
+      if(!plotReady){
+        Plotly.newPlot(chart,traces,layout,cfg).then(()=>{
+          plotReady=true;
+          if(!eventsBound) bindPlotEvents();
         });
-      } else {
-        Plotly.react(chart, traces, layout, config);
+      }else{
+        Plotly.react(chart,traces,layout,cfg);
       }
     }
 
-    function buildFigure(Px, Py, V, Qx, visP, visQ, visSlope, visBase, visHeight, visAngle){
+    function build(Px,Py,V,Qx,visP,visQ,visSlope){
       const Qy = V - Qx;
-      const {K, H, Rx, Ry, theta} = updateMetrics(Px, Py, Qx, Qy);
+      const {Rx,Ry,K,H,theta} = metrics(Px,Py,Qx,Qy);
 
-      const xs = Array.from({length:600}, (_,i)=> X_MIN + (AXIS_MAX - X_MIN)*i/599);
-      const ys = xs.map(x => V - x);
+      const xs = Array.from({length:500}, (_,i)=> X_MIN + (AXIS_MAX-X_MIN)*i/499);
+      const ys = xs.map(x=> V-x);
 
       const traces = [];
 
+      // bold axes
+      traces.push({x:[X_MIN,AXIS_MAX],y:[0,0],mode:'lines',showlegend:false,hoverinfo:'skip',line:{color:'black',width:2}});
+      traces.push({x:[0,0],y:[Y_MIN,AXIS_MAX],mode:'lines',showlegend:false,hoverinfo:'skip',line:{color:'black',width:2}});
+
       if (visSlope){
-        traces.push({ x: xs, y: ys, mode:'lines', name:'x + y = V',
-                      line:{color:'#e11d48', width:3} });
+        traces.push({x:xs,y:ys,mode:'lines',name:'x + y = V',line:{color:'#e11d48',width:3}});
       }
 
-      // P guides
       if (visP){
-        traces.push({ x:[Px,Px], y:[Y_MIN,Py], mode:'lines', showlegend:false,
-                      line:{color:'#9ca3af', dash:'dash'} });
-        traces.push({ x:[X_MIN,Px], y:[Py,Py], mode:'lines', showlegend:false,
-                      line:{color:'#9ca3af', dash:'dash'} });
+        traces.push({x:[Px,Px],y:[Y_MIN,Py],mode:'lines',showlegend:false,line:{color:'#9ca3af',dash:'dash'}});
+        traces.push({x:[X_MIN,Px],y:[Py,Py],mode:'lines',showlegend:false,line:{color:'#9ca3af',dash:'dash'}});
       }
 
-      // Q guides
       if (visQ){
-        traces.push({ x:[Qx,Qx], y:[Y_MIN,Qy], mode:'lines', showlegend:false,
-                      line:{color:'#60a5fa', dash:'dash'} });
-        traces.push({ x:[X_MIN,Qx], y:[Qy,Qy], mode:'lines', showlegend:false,
-                      line:{color:'#60a5fa', dash:'dash'} });
+        traces.push({x:[Qx,Qx],y:[Y_MIN,Qy],mode:'lines',showlegend:false,line:{color:'#60a5fa',dash:'dash'}});
+        traces.push({x:[X_MIN,Qx],y:[Qy,Qy],mode:'lines',showlegend:false,line:{color:'#60a5fa',dash:'dash'}});
       }
 
-      // Base K and Height H (toggleable)
-      if (visBase){
-        traces.push({ x:[Px, Rx], y:[Py, Ry], mode:'lines', name:'Base K (PR)',
-                      line:{color:'#f59e0b', dash:'dot', width:3} });
-        const offK = 0.015 * AXIS_MAX;
-        traces.push({ x:[(Px+Rx)/2], y:[Py + offK], mode:'text', showlegend:false,
-                      text:[`K = ${K.toFixed(1)}`], textfont:{color:'#b45309'}, textposition:'top center' });
-      }
-      if (visHeight){
-        traces.push({ x:[Rx, Qx], y:[Ry, Qy], mode:'lines', name:'Height H (RQ)',
-                      line:{color:'#059669', dash:'dot', width:3} });
-        const offH = 0.015 * AXIS_MAX;
-        traces.push({ x:[Rx + offH], y:[(Ry+Qy)/2], mode:'text', showlegend:false,
-                      text:[`H = ${H.toFixed(1)}`], textfont:{color:'#065f46'}, textposition:'middle left' });
-      }
+      // base/height + labels
+      traces.push({x:[Px,Rx],y:[Py,Ry],mode:'lines',name:'Base K',line:{color:'#f59e0b',dash:'dot',width:3}});
+      traces.push({x:[Rx,Qx],y:[Ry,Qy],mode:'lines',name:'Height H',line:{color:'#059669',dash:'dot',width:3}});
+      const off = 0.015*AXIS_MAX;
+      traces.push({x:[(Px+Rx)/2],y:[Py+off],mode:'text',showlegend:false,text:[`K=${K.toFixed(1)}`],textfont:{color:'#b45309'},textposition:'top center'});
+      traces.push({x:[Rx+off],y:[(Ry+Qy)/2],mode:'text',showlegend:false,text:[`H=${H.toFixed(1)}`],textfont:{color:'#065f46'},textposition:'middle left'});
 
-      traces.push({ x:[Px, Qx], y:[Py, Qy], mode:'lines', name:'PQ',
-                    line:{color:'#059669', dash:'dash', width:3} });
+      // slant PQ
+      traces.push({x:[Px,Qx],y:[Py,Qy],mode:'lines',name:'PQ',line:{color:'#059669',dash:'dash',width:3}});
 
-      if (visAngle){
-        const offA = 0.015 * AXIS_MAX;
-        traces.push({ x:[Px + offA], y:[Py + offA], mode:'text', showlegend:false,
-                      text:[`∠RPQ = ${theta.toFixed(2)}°`], textfont:{color:'#111827'}, textposition:'top left' });
-      }
-
-      // Extremes (endpoints of feasible segment from P)
-      const d = Math.max(0, V - (Px + Py));
-      const qxX = clamp(Px + d, X_MIN, AXIS_MAX);
-      const qyX = clamp(V - qxX, Y_MIN, AXIS_MAX);
-      traces.push({ x:[qxX], y:[qyX], mode:'markers', name:'All extra → X',
-                    marker:{symbol:'square-open', color:'#059669', size:11} });
-
-      const qyY = clamp(Py + d, Y_MIN, AXIS_MAX);
-      const qxY = clamp(V - qyY, X_MIN, AXIS_MAX);
-      traces.push({ x:[qxY], y:[qyY], mode:'markers', name:'All extra → Y',
-                    marker:{symbol:'square-open', color:'#7c3aed', size:11} });
-
-      // P and Q markers
+      // markers
       if (visP){
-        traces.push({ x:[Px], y:[Py], mode:'markers', name:'P',
-                      marker:{color:'#111827', size:11, line:{width:1, color:'#111827'}}});
+        traces.push({x:[Px],y:[Py],mode:'markers+text',name:'P',marker:{color:'#111827',size:10},
+                     text:['P'],textposition:'top center',textfont:{color:'#111827'}});
       }
       if (visQ){
-        traces.push({ x:[Qx], y:[Qy], mode:'markers', name:'Q',
-                      marker:{color:'white', size:10, line:{width:2, color:'#2563eb'}}});
-        traces.push({ x:[Rx], y:[Ry], mode:'markers+text', name:'R',
-                      marker:{color:'#ec4899', size:8}, text:['R'], textposition:'top center',
-                      textfont:{color:'#ec4899'} });
+        traces.push({x:[Qx],y:[Qy],mode:'markers+text',name:'Q',marker:{color:'white',size:10,line:{width:2,color:'#2563eb'}},
+                     text:[`Q`],textposition:'top center',textfont:{color:'#2563eb'}});
       }
 
-      const annotations = [
-        { x: Px, y: Py, xref:'x', yref:'y', text:'P', showarrow:false,
-          xanchor:'left', yanchor:'bottom', font:{color:'#111827', size:12} },
-        { x: Qx, y: Qy, xref:'x', yref:'y', text:'Q', showarrow:false,
-          xanchor:'left', yanchor:'bottom', font:{color:'#2563eb', size:12} },
-      ];
+      // >>> NEW: show Qx and Qy right on graph (at axis projections)
+      traces.push({x:[Qx],y:[0],mode:'markers+text',showlegend:false,
+                   marker:{size:6,color:'#2563eb'},text:[`Qx = ${Qx.toFixed(1)}`],
+                   textposition:'top center',textfont:{color:'#2563eb'}});
+      traces.push({x:[0],y:[Qy],mode:'markers+text',showlegend:false,
+                   marker:{size:6,color:'#2563eb'},text:[`Qy = ${Qy.toFixed(1)}`],
+                   textposition:'middle right',textfont:{color:'#2563eb'}});
 
       const layout = {
         margin:{l:40,r:20,t:30,b:40},
         height:520, plot_bgcolor:'#ffffff', paper_bgcolor:'#ffffff',
-        legend:{bgcolor:'white', bordercolor:'#e5e7eb', borderwidth:1,
-                orientation:'h', yanchor:'bottom', y:1.02, x:0},
-        xaxis:{range:[X_MIN, AXIS_MAX], gridcolor:'#e5e7eb', title:'x', zeroline:false, fixedrange:true},
-        yaxis:{range:[Y_MIN, AXIS_MAX], gridcolor:'#e5e7eb', title:'y', zeroline:false, fixedrange:true},
+        legend:{orientation:'h',yanchor:'bottom',y:1.02,x:0},
+        xaxis:{range:[X_MIN,AXIS_MAX],gridcolor:'#e5e7eb',title:'x',zeroline:false,fixedrange:true},
+        yaxis:{range:[Y_MIN,AXIS_MAX],gridcolor:'#e5e7eb',title:'y',zeroline:false,fixedrange:true},
         dragmode:false,
         editable:true,
-        annotations
+        annotations:[
+          {x:Px,y:Py,xref:'x',yref:'y',text:'P',showarrow:false,font:{color:'#111827'}},
+          {x:Qx,y:Qy,xref:'x',yref:'y',text:'Q',showarrow:false,font:{color:'#2563eb'}}
+        ]
       };
-
-      renderPlot(traces, layout);
+      render(traces, layout);
     }
 
-    /* ---------------- State & Sync ---------------- */
-    function getState(){
-      return {
-        Px: parseFloat(pxInput.value || '0'),
-        Py: parseFloat(pyInput.value || '0'),
-        V:  parseFloat(vInput.value  || '0'),
-        Qx: parseFloat(qxInput.value || '0'),
-        Qy: parseFloat(qyInput.value || '0'),
-        K:  parseFloat(kInput.value  || '0'),
-        H:  parseFloat(hInput.value  || '0'),
-        visP: showP.checked, visQ: showQ.checked, visSlope: showSlope.checked,
-        visBase: showBase.checked, visHeight: showHeight.checked, visAngle: showAngle.checked
-      };
-    }
-
-    function syncQxRail(Px, Py, V, {forceClamp} = {forceClamp:true}){
-      const [min, max] = feasibleQxBounds(Px, Py, V);
-      qxSlider.min = String(min);
-      qxSlider.max = String(max);
+    // rail + sync
+    function syncRail(Px,Py,V,forceClamp=true){
+      const [lo,hi] = feasibleQx(Px,Py,V);
+      qxS.min = String(lo);
+      qxS.max = String(hi);
       if (forceClamp){
-        const cur = parseFloat(qxSlider.value);
-        const clampVal = clamp(cur, min, max);
-        if (clampVal !== cur) qxSlider.value = clampVal;
+        const cur = parseFloat(qxS.value||'0');
+        const cl = clamp(cur, lo, hi);
+        if (cl !== cur) qxS.value = cl;
       }
     }
 
-    function syncKHFromQ(Px, Py, Qx, Qy){
-      if (!typingK) kInput.value = (Qx - Px).toFixed(1);
-      if (!typingH) hInput.value = (Qy - Py).toFixed(1);
-    }
-
-    /* ---------------- Core refresh ---------------- */
     function refresh(){
-      let {Px, Py, V, Qx, Qy, K, H, visP, visQ, visSlope, visBase, visHeight, visAngle} = getState();
+      let Px=parseFloat(pxI.value||'0');
+      let Py=parseFloat(pyI.value||'0');
+      let V =parseFloat(vI.value ||'0');
+      let Qx=parseFloat(qxI.value||'0');
 
-      // Axis from V
-      AXIS_MAX = Math.max(0, 1.1 * V);
-      qxSlider.max = AXIS_MAX;
+      // axis bounds follow V
+      AXIS_MAX = Math.max(0, 1.1*V);
+      qxS.max = AXIS_MAX;
 
-      // Clamp P into viewport
+      // --- SUM MODES ---
+      if (sumV300.checked){
+        // Enforce P.x + P.y = 300
+        const targetSum = 300;
+        Px = clamp(Px, X_MIN, AXIS_MAX);
+        Py = clamp(targetSum - Px, Y_MIN, AXIS_MAX);
+        pxI.value = Px.toFixed(1);
+        pyI.value = Py.toFixed(1);
+        // V is free here (H+K = V - 300)
+      } else {
+        // Custom: enforce Δ = target => set V = target + (Px+Py)
+        const S = parseFloat(sumI.value||'0'); // default 100
+        const newV = (Px+Py) + S;
+        if (!typingV){ V = newV; vI.value = V.toFixed(1); }
+      }
+
+      // clamp P to viewport
       Px = clamp(Px, X_MIN, AXIS_MAX);
       Py = clamp(Py, Y_MIN, AXIS_MAX);
 
-      // Feasible segment & Δ
-      const [lo, hi, d] = feasibleQxBounds(Px, Py, V);
+      // maintain Qy from line, then rail-clamp Qx when not actively typing it
+      let Qy = V - Qx;
 
-      // Priority of control: K > H > Qy > Qx
+      const [lo,hi] = feasibleQx(Px,Py,V);
+      if (!typingQx && !typingQy && !typingK && !typingH){
+        Qx = clamp(Qx, lo, hi);
+        Qy = V - Qx;
+        qxI.value = Qx.toFixed(1);
+        qyI.value = Qy.toFixed(1);
+        qxS.value = Qx;
+        qxSV.textContent = Qx.toFixed(1);
+      } else {
+        qxSV.textContent = (parseFloat(qxI.value||'0')).toFixed(1);
+      }
+
+      // K/H typing priority: K -> Qx,  H -> Qy
       if (typingK){
-        // K -> Qx = Px + K -> snap to [lo, hi]
-        K = clamp(parseFloat(kInput.value || '0'), 0, d);
+        const d = Math.max(0, V-(Px+Py));
+        let K = clamp(parseFloat(kI.value||'0'), 0, d);
         Qx = clamp(Px + K, lo, hi);
         Qy = V - Qx;
-        qxInput.value = Qx.toFixed(1);
-        qyInput.value = Qy.toFixed(1);
-      } else if (typingH){
-        // H -> Qy = Py + H -> Qx = V - Qy -> snap to rail
-        H = clamp(parseFloat(hInput.value || '0'), 0, d);
+        qxI.value = Qx.toFixed(1);
+        qyI.value = Qy.toFixed(1);
+      }
+      if (typingH){
+        const d = Math.max(0, V-(Px+Py));
+        let H = clamp(parseFloat(hI.value||'0'), 0, d);
         Qy = Py + H;
-        Qx = V - Qy;
-        Qx = clamp(Qx, lo, hi);
+        Qx = clamp(V - Qy, lo, hi);
         Qy = V - Qx;
-        qxInput.value = Qx.toFixed(1);
-        qyInput.value = Qy.toFixed(1);
-      } else if (typingQy){
-        Qy = parseFloat(qyInput.value || '0');
-        Qx = V - Qy;
-      } else if (typingQx){
-        Qx = parseFloat(qxInput.value || '0');
-        Qy = V - Qx;
-      } else {
-        // idle: honor Qx box, then derive Qy
-        Qx = parseFloat(qxInput.value || '0');
-        Qy = V - Qx;
+        qxI.value = Qx.toFixed(1);
+        qyI.value = Qy.toFixed(1);
       }
 
-      // If not actively typing any of Q/K/H, snap & sync
-      const active = typingQx || typingQy || typingK || typingH;
-      if (!active){
-        Qx = clamp(Qx, lo, hi);
-        Qy = V - Qx;
-        qxInput.value = Qx.toFixed(1);
-        qyInput.value = Qy.toFixed(1);
-        qxSlider.value = Qx;
-        qxSliderValue.textContent = Qx.toFixed(1);
-      } else {
-        qxSliderValue.textContent = (parseFloat(qxInput.value || '0')).toFixed(1);
-      }
+      // update derived K/H (unless typing them)
+      if (!typingK) kI.value = (Qx - Px).toFixed(1);
+      if (!typingH) hI.value = (Qy - Py).toFixed(1);
 
-      // Update K/H from Q & P unless user is typing them
-      syncKHFromQ(Px, Py, Qx, Qy);
+      // keep rail current
+      syncRail(Px,Py,V, !(typingQx||typingQy||typingK||typingH));
 
-      // Keep slider rail current
-      syncQxRail(Px, Py, V, {forceClamp: !active});
-
-      // Draw
-      buildFigure(Px, Py, V, Qx, visP, visQ, visSlope, visBase, visHeight, visAngle);
+      // draw
+      build(Px,Py,V,Qx, showP.checked, showQ.checked, showSlope.checked);
     }
 
-    /* ---------------- Drag events ---------------- */
     function bindPlotEvents(){
       if (eventsBound) return;
-
-      const relayoutHandler = (e)=>{
+      const onRelayout = (e)=>{
         if (!e) return;
-        const has = k => Object.prototype.hasOwnProperty.call(e, k);
-        const V = parseFloat(vInput.value || '0');
+        const has = k => Object.prototype.hasOwnProperty.call(e,k);
+        let V = parseFloat(vI.value||'0');
 
-        // Drag P
-        if (has('annotations[0].x') || has('annotations[0].y')) {
-          const newPx = has('annotations[0].x') ? e['annotations[0].x'] : parseFloat(pxInput.value||'0');
-          const newPy = has('annotations[0].y') ? e['annotations[0].y'] : parseFloat(pyInput.value||'0');
-          AXIS_MAX = Math.max(0, 1.1 * V);
-          pxInput.value = clamp(newPx, X_MIN, AXIS_MAX).toFixed(1);
-          pyInput.value = clamp(newPy, Y_MIN, AXIS_MAX).toFixed(1);
-          typingQx = typingQy = typingK = typingH = false;
-          refresh();
-          return;
+        // P dragged
+        if (has('annotations[0].x') || has('annotations[0].y')){
+          let Px = has('annotations[0].x') ? e['annotations[0].x'] : parseFloat(pxI.value||'0');
+          let Py = has('annotations[0].y') ? e['annotations[0].y'] : parseFloat(pyI.value||'0');
+
+          if (sumV300.checked){
+            // keep Px+Py=300
+            Px = clamp(Px, X_MIN, AXIS_MAX);
+            Py = clamp(300 - Px, Y_MIN, AXIS_MAX);
+          }
+
+          pxI.value = clamp(Px, X_MIN, AXIS_MAX).toFixed(1);
+          pyI.value = clamp(Py, Y_MIN, AXIS_MAX).toFixed(1);
+          typingQx=typingQy=typingK=typingH=false;
+          refresh(); return;
         }
 
-        // Drag Q (snap on feasible rail)
-        if (has('annotations[1].x') || has('annotations[1].y')) {
-          let qx = has('annotations[1].x') ? e['annotations[1].x'] : parseFloat(qxInput.value||'0');
-          const Px = parseFloat(pxInput.value||'0');
-          const Py = parseFloat(pyInput.value||'0');
-          const [lo, hi] = feasibleQxBounds(Px, Py, V);
+        // Q dragged
+        if (has('annotations[1].x') || has('annotations[1].y')){
+          const Px=parseFloat(pxI.value||'0'), Py=parseFloat(pyI.value||'0');
+          let qx = has('annotations[1].x') ? e['annotations[1].x'] : parseFloat(qxI.value||'0');
+          const [lo,hi] = feasibleQx(Px,Py,V);
           qx = clamp(qx, lo, hi);
-
-          qxInput.value = qx.toFixed(1);
-          qyInput.value = (V - qx).toFixed(1);
-          kInput.value  = (qx - Px).toFixed(1);
-          hInput.value  = ((V - qx) - Py).toFixed(1);
-
-          qxSlider.value = qx;
-          qxSliderValue.textContent = qx.toFixed(1);
-          typingQx = typingQy = typingK = typingH = false;
-          refresh();
-          return;
+          qxI.value = qx.toFixed(1);
+          qyI.value = (V - qx).toFixed(1);
+          typingQx=typingQy=typingK=typingH=false;
+          refresh(); return;
         }
       };
-
-      chart.on('plotly_relayout', relayoutHandler);
-      chart.on('plotly_relayouting', relayoutHandler);
+      chart.on('plotly_relayout', onRelayout);
+      chart.on('plotly_relayouting', onRelayout);
       eventsBound = true;
     }
 
-    /* ---------------- Wiring ---------------- */
-    // typing flags
-    qxInput.addEventListener('focus', ()=>{ typingQx = true; });
-    qxInput.addEventListener('blur',  ()=>{ typingQx = false; refresh(); });
-    qyInput.addEventListener('focus', ()=>{ typingQy = true; });
-    qyInput.addEventListener('blur',  ()=>{ typingQy = false; refresh(); });
-    kInput.addEventListener('focus',  ()=>{ typingK  = true; });
-    kInput.addEventListener('blur',   ()=>{ typingK  = false; refresh(); });
-    hInput.addEventListener('focus',  ()=>{ typingH  = true; });
-    hInput.addEventListener('blur',   ()=>{ typingH  = false; refresh(); });
-
-    // live inputs
-    [pxInput, pyInput, vInput, qxInput, qyInput, kInput, hInput].forEach(el=>{
-      el.addEventListener('change', refresh);
+    // wire inputs
+    [['px',pxI],['py',pyI],['v',vI],['qx',qxI],['qy',qyI],['k',kI],['h',hI]].forEach(([key,el])=>{
+      el.addEventListener('focus', ()=>{
+        if(key==='qx') typingQx=true;
+        if(key==='qy') typingQy=true;
+        if(key==='k')  typingK =true;
+        if(key==='h')  typingH =true;
+        if(key==='v')  typingV =true;
+        if(key==='px') typingPx=true;
+        if(key==='py') typingPy=true;
+      });
+      el.addEventListener('blur', ()=>{
+        typingQx=typingQy=typingK=typingH=typingV=typingPx=typingPy=false;
+        refresh();
+      });
       el.addEventListener('input', ()=>{
-        if (el === qxInput) qxSliderValue.textContent = (parseFloat(qxInput.value || '0')).toFixed(1);
+        if (el===qxI) qxSV.textContent = (parseFloat(qxI.value||'0')).toFixed(1);
+        refresh();
+      });
+      el.addEventListener('change', refresh);
+    });
+
+    // plus/minus for P, V, Q, H, K
+    const STEP=0.1;
+    const bumps = {
+      'px-inc':+1,'px-dec':-1, 'py-inc':+1,'py-dec':-1,
+      'v-inc':+1,'v-dec':-1,
+      'qx-inc':+STEP,'qx-dec':-STEP,'qy-inc':+STEP,'qy-dec':-STEP,
+      'k-inc':+STEP,'k-dec':-STEP,'h-inc':+STEP,'h-dec':-STEP,
+      'sum-inc':+1,'sum-dec':-1
+    };
+    Object.entries(bumps).forEach(([id,step])=>{
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('click', ()=>{
+        if (id.startsWith('sum-')){
+          typingSum=true;
+          sumI.value = (parseFloat(sumI.value||'0') + step).toFixed(1);
+          typingSum=false; refresh(); return;
+        }
+        const key = id.split('-')[0];
+        const input = document.getElementById(key+'-input');
+        if (key==='qx') typingQx=true;
+        if (key==='qy') typingQy=true;
+        if (key==='k')  typingK =true;
+        if (key==='h')  typingH =true;
+        input.value = (parseFloat(input.value||'0') + step).toFixed(1);
+        typingQx=typingQy=typingK=typingH=false;
         refresh();
       });
     });
 
     // slider
-    qxSlider.addEventListener('input', ()=>{
-      if (typingQx || typingQy || typingK || typingH) return;
-      qxInput.value = parseFloat(qxSlider.value).toFixed(1);
-      qxSliderValue.textContent = parseFloat(qxSlider.value).toFixed(1);
+    qxS.addEventListener('input', ()=>{
+      if (typingQx||typingQy||typingK||typingH) return;
+      qxI.value = parseFloat(qxS.value).toFixed(1);
+      qxSV.textContent = parseFloat(qxS.value).toFixed(1);
       refresh();
     });
 
-    // visibility
-    [showP, showQ, showSlope, showBase, showHeight, showAngle].forEach(cb => cb.addEventListener('change', refresh));
-
-    // plus/minus buttons
-    Object.entries({
-      'px-inc': +1, 'px-dec': -1,
-      'py-inc': +1, 'py-dec': -1,
-      'v-inc':  +1, 'v-dec':  -1,
-      'qx-inc': +STEP, 'qx-dec': -STEP,
-      'qy-inc': +STEP, 'qy-dec': -STEP,
-      'k-inc':  +STEP, 'k-dec':  -STEP,
-      'h-inc':  +STEP, 'h-dec':  -STEP,
-    }).forEach(([id, step])=>{
-      document.getElementById(id).addEventListener('click', ()=>{
-        const key = id.split('-')[0];
-        if (key === 'qx'){ typingQx = true; qxInput.value = (parseFloat(qxInput.value||'0') + step).toFixed(1); refresh(); typingQx = false; }
-        else if (key === 'qy'){ typingQy = true; qyInput.value = (parseFloat(qyInput.value||'0') + step).toFixed(1); refresh(); typingQy = false; }
-        else if (key === 'k'){ typingK  = true; kInput.value  = (parseFloat(kInput.value ||'0') + step).toFixed(1);  refresh(); typingK  = false; }
-        else if (key === 'h'){ typingH  = true; hInput.value  = (parseFloat(hInput.value ||'0') + step).toFixed(1);  refresh(); typingH  = false; }
-        else if (key === 'v'){ vInput.value = (parseFloat(vInput.value||'0') + step).toFixed(1); refresh(); }
-        else {
-          const input = document.getElementById(key + '-input');
-          input.value = (parseFloat(input.value||'0') + step).toFixed(1);
-          refresh();
-        }
-      });
+    // sum mode switch
+    sumCustom.addEventListener('change', ()=> {
+      if (sumCustom.checked) refresh();
     });
+    sumV300.addEventListener('change', ()=> {
+      if (sumV300.checked) refresh();
+    });
+    sumI.addEventListener('input', ()=> { if (sumCustom.checked) refresh(); });
 
     // actions
-    document.getElementById('reset').addEventListener('click', ()=>{
-      pxInput.value='100.0'; pyInput.value='200.0'; vInput.value='400.0';
-      qxInput.value='140.0'; qyInput.value='260.0'; kInput.value='40.0'; hInput.value='60.0';
+    $('reset').addEventListener('click', ()=>{
+      pxI.value='100.0'; pyI.value='200.0'; vI.value='400.0';
+      qxI.value='140.0'; qyI.value='260.0'; kI.value='40.0'; hI.value='60.0';
+      sumCustom.checked=true; sumI.value='100.0';
       showP.checked=true; showQ.checked=true; showSlope.checked=true;
-      showBase.checked=true; showHeight.checked=true; showAngle.checked=true;
-      qxSlider.value='140.0'; qxSliderValue.textContent='140.0';
-      typingQx = typingQy = typingK = typingH = false;
+      qxS.value='140.0'; qxSV.textContent='140.0';
+      typingQx=typingQy=typingK=typingH=typingV=typingPx=typingPy=false;
       refresh();
     });
-    document.getElementById('snap-p').addEventListener('click', ()=>{
-      const V = parseFloat(vInput.value || '0');
-      const Px = parseFloat(pxInput.value || '0');
-      pyInput.value = (V - Px).toFixed(1);
+    $('snap-p').addEventListener('click', ()=>{
+      // Snap P to the current V line: Py = V - Px
+      const V = parseFloat(vI.value||'0');
+      const Px= parseFloat(pxI.value||'0');
+      pyI.value = (V - Px).toFixed(1);
       refresh();
     });
-    document.getElementById('center').addEventListener('click', refresh);
+    $('center').addEventListener('click', refresh);
 
-    // first draw
+    // initial draw
     refresh();
   }
   </script>
